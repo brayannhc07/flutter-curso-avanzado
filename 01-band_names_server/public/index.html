@@ -18,6 +18,11 @@
         console.log("Conectado al servidor.");
       });
 
+      socket.on("active-bands", function (bands) {
+        console.clear();
+        console.table(bands);
+      });
+
       socket.on("disconnect", function () {
         console.log("Perdimos comunicación con el servidor.");
       });
@@ -27,6 +32,10 @@
       });
 
       socket.emit("mensaje", { nombre: "Bryan" });
+
+      socket.on("nuevo-mensaje", function (payload) {
+        console.log("Nuevo mensaje:", payload);
+      });
     </script>
   </body>
 </html>

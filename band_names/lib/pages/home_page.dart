@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:band_names/models/band.dart';
+import 'package:band_names/services/socket_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -13,14 +15,36 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Band> bands = [
-    Band(id: "1", name: "Metallica", votes: 5),
-    Band(id: "2", name: "Queen", votes: 3),
-    Band(id: "3", name: "Heroes del Silencio", votes: 4),
-    Band(id: "4", name: "Bon Jovi", votes: 2),
+    // Band(id: "1", name: "Metallica", votes: 5),
+    // Band(id: "2", name: "Queen", votes: 3),
+    // Band(id: "3", name: "Heroes del Silencio", votes: 4),
+    // Band(id: "4", name: "Bon Jovi", votes: 2),
   ];
 
   @override
+  void initState() {
+    final socketService = Provider.of<SocketService>(context, listen: false);
+
+    socketService.socket.on("active-bands", (payload) {
+      setState(() {
+        bands = (payload as List).map((band) => Band.fromMap(band)).toList();
+      });
+    });
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    final socketService = Provider.of<SocketService>(context, listen: false);
+    socketService.socket.off("active-bands");
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final socketService = Provider.of<SocketService>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -29,6 +53,14 @@ class _HomePageState extends State<HomePage> {
         ),
         elevation: 0,
         backgroundColor: Colors.white,
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 10),
+            child: socketService.serverStatus == ServerStatus.online
+                ? Icon(Icons.check_circle, color: Colors.blue.shade300)
+                : Icon(Icons.offline_bolt, color: Colors.red),
+          )
+        ],
       ),
       body: ListView.builder(
         itemCount: bands.length,
